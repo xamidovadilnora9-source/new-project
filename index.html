@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kunlik Daromad Tizimi</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #dddddd;
+            --income-color: #22c55e;
+            --expense-color: #ef4444;
+            --accent-color: #3b82f6;
+        }
+
+        body.dark {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --border-color: #404040;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            max-width: 1200px;
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: var(--bg-primary);
+            padding: 20px;
+            border-left: 1px solid var(--border-color);
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .close-sidebar-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: var(--expense-color);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 1003;
+        }
+
+        .close-sidebar-btn:hover {
+            background-color: #dc2626;
+            transform: scale(1.1);
+        }
+
+        .mobile-profile-btn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border: none;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+            cursor: pointer;
+            z-index: 998;
+            transition: transform 0.3s ease;
+        }
+
+        .mobile-profile-btn:active {
+            transform: scale(0.95);
+        }
+
+        .mobile-profile-btn svg {
+            width: 28px;
+            height: 28px;
+            fill: white;
+        }
+
+        .mobile-sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .mobile-sidebar-overlay.active {
+            display: block;
+        }
+
+        .notification-banner {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #ffffff;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(251, 191, 36, 0.5);
+            z-index: 9999;
+            transition: top 0.5s ease;
+            max-width: 90%;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .notification-banner.show {
+            top: 20px;
+        }
+
+        .notification-banner .close-notif {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 25px;
+            height: 25px;
+            line-height: 1;
+        }
+
+        .notification-text {
+            padding-right: 20px;
+            font-size: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .notification-banner {
+                max-width: 85%;
+                padding: 12px 20px;
+            }
+
+            .notification-text {
+                font-size: 13px;
+            }
+        }
+
+        .filter-section {
+            background-color: var(--bg-primary);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .filter-section h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--accent-color);
+        }
+
+        .filter-btn.active {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .header {
+            background-color: var(--bg-primary);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, var(--accent-color), #60a5fa);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .balance-card h2 {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .balance-amount {
+            font-size: 42px;
+            font-weight: bold;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-primary);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .stat-value.income {
+            color: var(--income-color);
+        }
+
+        .stat-value.expense {
+            color: var(--expense-color);
+        }
+
+        .form-section {
+            background-color: var(--bg-primary);
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-section h2 {
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-income {
+            background-color: var(--income-color);
+            color: white;
+            margin-right: 10px;
+        }
+
+        .btn-income:hover {
+            background-color: #16a34a;
+            transform: translateY(-2px);
+        }
+
+        .btn-expense {
+            background-color: var(--expense-color);
+            color: white;
+        }
+
+        .btn-expense:hover {
+            background-color: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .transactions {
+            background-color: var(--bg-primary);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .transactions h2 {
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            border-left: 4px solid var(--border-color);
+            position: relative;
+        }
+
+        .transaction-item.income {
+            border-left-color: var(--income-color);
+        }
+
+        .transaction-item.expense {
+            border-left-color: var(--expense-color);
+        }
+
+        .delete-btn {
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--expense-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background-color: #dc2626;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .transaction-item:hover .delete-btn {
+            display: flex;
+        }
+
+        .transaction-info {
+            flex: 1;
+        }
+
+        .transaction-desc {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .transaction-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .transaction-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .transaction-amount {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .transaction-amount.income {
+            color: var(--income-color);
+        }
+
+        .transaction-amount.expense {
+            color: var(--expense-color);
+        }
+
+        .profile-section {
+            margin-bottom: 30px;
+        }
+
+        .profile-section h2 {
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .settings-group {
+            margin-bottom: 25px;
+        }
+
+        .settings-group h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+
+        .theme-toggle {
+            display: flex;
+            gap: 10px;
+        }
+
+        .theme-btn {
+            flex: 1;
+            padding: 10px;
+            background-color: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .theme-btn.active {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .lang-select {
+            width: 100%;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .today-income-section {
+            background-color: var(--bg-primary);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .today-income-section h3 {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .today-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--income-color);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .profile-avatar svg {
+            width: 60px;
+            height: 60px;
+            fill: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .main-content {
+                padding: 80px 15px 20px;
+            }
+
+            .mobile-profile-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .close-sidebar-btn {
+                display: flex;
+                z-index: 1003;
+            }
+
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 70%;
+                height: 100vh;
+                border-left: none;
+                border-right: 1px solid var(--border-color);
+                transition: right 0.3s ease;
+                z-index: 1000;
+                overflow-y: auto;
+            }
+
+            .sidebar.active {
+                right: 0;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .balance-card {
+                padding: 20px;
+            }
+
+            .balance-amount {
+                font-size: 32px;
+            }
+
+            .filter-buttons {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification-banner" id="notificationBanner">
+        <button class="close-notif" id="closeNotif">×</button>
+        <div class="notification-text" id="notificationText"></div>
+    </div>
+
+    <button class="mobile-profile-btn" id="mobileProfileBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+    </button>
+
+    <div class="mobile-sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="container">
+        <div class="main-content">
+            <div class="header">
+                <h1 id="pageTitle">Kunlik Daromad va Xarajat Tizimi</h1>
+            </div>
+
+            <div class="balance-card">
+                <h2 id="balanceLabel">Umumiy Balans</h2>
+                <div class="balance-amount" id="totalBalance">0 so'm</div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <h3 id="incomeLabel">Daromad</h3>
+                    <div class="stat-value income" id="totalIncome">0 so'm</div>
+                </div>
+                <div class="stat-card">
+                    <h3 id="expenseLabel">Xarajat</h3>
+                    <div class="stat-value expense" id="totalExpense">0 so'm</div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2 id="formTitle">Yangi Kiritma</h2>
+                <div class="form-group">
+                    <label for="description" id="descLabel">Tavsif</label>
+                    <input type="text" id="description" placeholder="">
+                </div>
+                <div class="form-group">
+                    <label for="amount" id="amountLabel">Summa</label>
+                    <input type="number" id="amount" placeholder="0">
+                </div>
+                <div>
+                    <button class="btn-income" id="btnIncome">+ Daromad</button>
+                    <button class="btn-expense" id="btnExpense">- Xarajat</button>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h3 id="filterTitle">Qidirish va Filtr</h3>
+                <input type="text" class="search-box" id="searchBox" placeholder="">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all" id="filterAll">Hammasi</button>
+                    <button class="filter-btn" data-filter="income" id="filterIncome">Daromad</button>
+                    <button class="filter-btn" data-filter="expense" id="filterExpense">Xarajat</button>
+                    <button class="filter-btn" data-filter="today" id="filterToday">Bugun</button>
+                    <button class="filter-btn" data-filter="week" id="filterWeek">Bu hafta</button>
+                    <button class="filter-btn" data-filter="month" id="filterMonth">Bu oy</button>
+                </div>
+            </div>
+
+            <div class="transactions">
+                <h2 id="historyTitle">Tarix</h2>
+                <div id="transactionList" class="empty-state">
+                    <p id="emptyText">Hali hech narsa yo'q</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar" id="sidebar">
+            <button class="close-sidebar-btn" id="closeSidebarBtn">×</button>
+            <div class="profile-section">
+                <div class="profile-avatar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                </div>
+
+                <h2 id="profileTitle">Mening Profilim</h2>
+                
+                <div class="today-income-section">
+                    <h3 id="todayIncomeLabel">Bugungi Kirim</h3>
+                    <div class="today-value" id="todayIncomeValue">0 so'm</div>
+                </div>
+
+                <div class="today-income-section">
+                    <h3 id="todayExpenseLabel">Bugungi Chiqim</h3>
+                    <div class="today-value expense" id="todayExpenseValue">0 so'm</div>
+                </div>
+                
+                <div class="settings-group">
+                    <h3 id="themeLabel">Rang Tanlash</h3>
+                    <div class="theme-toggle">
+                        <button class="theme-btn active" id="lightTheme">☀️ <span id="lightText">Oq</span></button>
+                        <button class="theme-btn" id="darkTheme">🌙 <span id="darkText">Qora</span></button>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3 id="langLabel">Til Tanlash</h3>
+                    <select class="lang-select" id="languageSelect">
+                        <option value="uz">O'zbekcha</option>
+                        <option value="ru">Русский</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            let transactions = [];
+            let currentLang = 'uz';
+            let currentTheme = 'light';
+            let currentFilter = 'all';
+            let searchQuery = '';
+            let lastNotificationShown = null;
+
+            const translations = {
+                uz: {
+                    pageTitle: 'Kunlik Daromad va Xarajat Tizimi',
+                    balanceLabel: 'Umumiy Balans',
+                    incomeLabel: 'Daromad',
+                    expenseLabel: 'Xarajat',
+                    formTitle: 'Yangi Kiritma',
+                    descLabel: 'Tavsif',
+                    amountLabel: 'Summa',
+                    dateLabel: 'Sana',
+                    btnIncome: '+ Daromad',
+                    btnExpense: '- Xarajat',
+                    historyTitle: 'Tarix',
+                    profileTitle: 'Mening Profilim',
+                    themeLabel: 'Rang Tanlash',
+                    langLabel: 'Til Tanlash',
+                    lightText: 'Oq',
+                    darkText: 'Qora',
+                    emptyText: 'Hali hech narsa yo\'q',
+                    descPlaceholder: 'Masalan: Ish haqi',
+                    amountPlaceholder: '0',
+                    todayIncomeLabel: 'Bugungi Kirim',
+                    todayExpenseLabel: 'Bugungi Chiqim',
+                    filterTitle: 'Qidirish va Filtr',
+                    searchPlaceholder: 'Tavsif bo\'yicha qidirish...',
+                    filterAll: 'Hammasi',
+                    filterIncome: 'Daromad',
+                    filterExpense: 'Xarajat',
+                    filterToday: 'Bugun',
+                    filterWeek: 'Bu hafta',
+                    filterMonth: 'Bu oy',
+                    weeklyNotification: '💰 HAR HAFTALIK ESLATMA: Platformani yaratgan yosh dasturchiga haftada bir marta to\'lov qilishingiz SHART! Iltimos, bugun to\'lovni amalga oshiring!'
+                },
+                ru: {
+                    pageTitle: 'Система Ежедневных Доходов и Расходов',
+                    balanceLabel: 'Общий Баланс',
+                    incomeLabel: 'Доход',
+                    expenseLabel: 'Расход',
+                    formTitle: 'Новая Запись',
+                    descLabel: 'Описание',
+                    amountLabel: 'Сумма',
+                    dateLabel: 'Дата',
+                    btnIncome: '+ Доход',
+                    btnExpense: '- Расход',
+                    historyTitle: 'История',
+                    profileTitle: 'Мой Профиль',
+                    themeLabel: 'Выбрать Тему',
+                    langLabel: 'Выбрать Язык',
+                    lightText: 'Светлая',
+                    darkText: 'Темная',
+                    emptyText: 'Пока ничего нет',
+                    descPlaceholder: 'Например: Зарплата',
+                    amountPlaceholder: '0',
+                    todayIncomeLabel: 'Сегодняшний Доход',
+                    todayExpenseLabel: 'Сегодняшний Расход',
+                    filterTitle: 'Поиск и Фильтр',
+                    searchPlaceholder: 'Поиск по описанию...',
+                    filterAll: 'Все',
+                    filterIncome: 'Доход',
+                    filterExpense: 'Расход',
+                    filterToday: 'Сегодня',
+                    filterWeek: 'Эта неделя',
+                    filterMonth: 'Этот месяц',
+                    weeklyNotification: '💰 ЕЖЕНЕДЕЛЬНОЕ НАПОМИНАНИЕ: Вы ОБЯЗАНЫ оплачивать молодому разработчику платформы раз в неделю! Пожалуйста, сделайте оплату сегодня!'
+                }
+            };
+
+            function checkNotifications() {
+                const now = new Date();
+                const today = now.toDateString();
+                
+                try {
+                    const lastShown = localStorage.getItem('lastNotificationShown');
+                    if (lastShown === today) {
+                        return; 
+                    }
+                } catch(e) {
+                    console.log('Notification check failed');
+                }
+                
+                const dayOfWeek = now.getDay();
+                
+                const daysSinceStart = Math.floor((now - new Date(2025, 0, 1)) / (1000 * 60 * 60 * 24));
+                
+                if (dayOfWeek === 1 || dayOfWeek === 5 || daysSinceStart % 2 === 0) {
+                    const t = translations[currentLang];
+                    showNotification(t.weeklyNotification);
+                    
+                    try {
+                        localStorage.setItem('lastNotificationShown', today);
+                    } catch(e) {
+                        console.log('Notification save failed');
+                    }
+                }
+            }
+            
+            function showNotification(message) {
+                const $banner = $('#notificationBanner');
+                $('#notificationText').text(message);
+                $banner.addClass('show');
+                
+                setTimeout(() => {
+                    $banner.removeClass('show');
+                }, 15000);
+            }
+
+            function updateLanguage(lang) {
+                currentLang = lang;
+                const t = translations[lang];
+                
+                $('#pageTitle').text(t.pageTitle);
+                $('#balanceLabel').text(t.balanceLabel);
+                $('#incomeLabel').text(t.incomeLabel);
+                $('#expenseLabel').text(t.expenseLabel);
+                $('#formTitle').text(t.formTitle);
+                $('#descLabel').text(t.descLabel);
+                $('#amountLabel').text(t.amountLabel);
+                $('#dateLabel').text(t.dateLabel);
+                $('#btnIncome').text(t.btnIncome);
+                $('#btnExpense').text(t.btnExpense);
+                $('#historyTitle').text(t.historyTitle);
+                $('#profileTitle').text(t.profileTitle);
+                $('#themeLabel').text(t.themeLabel);
+                $('#langLabel').text(t.langLabel);
+                $('#lightText').text(t.lightText);
+                $('#darkText').text(t.darkText);
+                $('#todayIncomeLabel').text(t.todayIncomeLabel);
+                $('#todayExpenseLabel').text(t.todayExpenseLabel);
+                $('#filterTitle').text(t.filterTitle);
+                $('#searchBox').attr('placeholder', t.searchPlaceholder);
+                $('#filterAll').text(t.filterAll);
+                $('#filterIncome').text(t.filterIncome);
+                $('#filterExpense').text(t.filterExpense);
+                $('#filterToday').text(t.filterToday);
+                $('#filterWeek').text(t.filterWeek);
+                $('#filterMonth').text(t.filterMonth);
+                $('#description').attr('placeholder', t.descPlaceholder);
+                
+                if (transactions.length === 0) {
+                    $('#emptyText').text(t.emptyText);
+                }
+            }
+
+            function updateTheme(theme) {
+                currentTheme = theme;
+                if (theme === 'dark') {
+                    $('body').addClass('dark');
+                    $('#darkTheme').addClass('active');
+                    $('#lightTheme').removeClass('active');
+                } else {
+                    $('body').removeClass('dark');
+                    $('#lightTheme').addClass('active');
+                    $('#darkTheme').removeClass('active');
+                }
+                
+                try {
+                    localStorage.setItem('appTheme', theme);
+                } catch(e) {
+                    console.log('Theme save failed');
+                }
+            }
+
+            function loadTheme() {
+                try {
+                    const savedTheme = localStorage.getItem('appTheme');
+                    if (savedTheme) {
+                        updateTheme(savedTheme);
+                    }
+                } catch(e) {
+                    console.log('Theme load failed');
+                }
+            }
+
+            function calculateBalance() {
+                let totalIncome = 0;
+                let totalExpense = 0;
+                let todayIncome = 0;
+                let todayExpense = 0;
+                const todayStart = new Date();
+                todayStart.setHours(0, 0, 0, 0);
+                const todayEnd = new Date();
+                todayEnd.setHours(23, 59, 59, 999);
+
+                transactions.forEach(t => {
+                    if (t.type === 'income') {
+                        totalIncome += t.amount;
+                        if (t.timestamp >= todayStart.getTime() && t.timestamp <= todayEnd.getTime()) {
+                            todayIncome += t.amount;
+                        }
+                    } else {
+                        totalExpense += t.amount;
+                        if (t.timestamp >= todayStart.getTime() && t.timestamp <= todayEnd.getTime()) {
+                            todayExpense += t.amount;
+                        }
+                    }
+                });
+
+                const balance = totalIncome - totalExpense;
+                const currency = currentLang === 'uz' ? ' so\'m' : ' сум';
+
+                $('#totalBalance').text(formatNumber(balance) + currency);
+                $('#totalIncome').text(formatNumber(totalIncome) + currency);
+                $('#totalExpense').text(formatNumber(totalExpense) + currency);
+                $('#todayIncomeValue').text(formatNumber(todayIncome) + currency);
+                $('#todayExpenseValue').text(formatNumber(todayExpense) + currency);
+            }
+
+            function formatNumber(num) {
+                return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+            }
+
+            function renderTransactions() {
+                const $list = $('#transactionList');
+                
+                let filtered = [...transactions];
+                
+                if (searchQuery) {
+                    filtered = filtered.filter(t => 
+                        t.description.toLowerCase().includes(searchQuery.toLowerCase())
+                    );
+                }
+                
+                if (currentFilter !== 'all') {
+                    const now = new Date();
+                    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+                    const todayEnd = todayStart + 86400000 - 1;
+                    
+                    const weekStart = new Date(now);
+                    weekStart.setDate(now.getDate() - now.getDay());
+                    weekStart.setHours(0, 0, 0, 0);
+                    
+                    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+                    
+                    filtered = filtered.filter(t => {
+                        if (currentFilter === 'income') return t.type === 'income';
+                        if (currentFilter === 'expense') return t.type === 'expense';
+                        if (currentFilter === 'today') return t.timestamp >= todayStart && t.timestamp <= todayEnd;
+                        if (currentFilter === 'week') return t.timestamp >= weekStart.getTime();
+                        if (currentFilter === 'month') return t.timestamp >= monthStart;
+                        return true;
+                    });
+                }
+                
+                if (filtered.length === 0) {
+                    const emptyText = currentLang === 'uz' ? 'Hech narsa topilmadi' : 'Ничего не найдено';
+                    $list.html(`<p class="empty-state">${emptyText}</p>`);
+                    return;
+                }
+
+                $list.empty();
+                
+                const sorted = filtered.sort((a, b) => b.timestamp - a.timestamp);
+                
+                sorted.forEach((t, index) => {
+                    const sign = t.type === 'income' ? '+' : '-';
+                    const currency = currentLang === 'uz' ? ' so\'m' : ' сум';
+                    
+                    const $item = $(`
+                        <div class="transaction-item ${t.type}">
+                            <div class="transaction-info">
+                                <div class="transaction-desc">${t.description}</div>
+                                <div class="transaction-date">
+                                    <span>${formatDateTime(t.timestamp)}</span>
+                                </div>
+                            </div>
+                            <div class="transaction-amount ${t.type}">
+                                ${sign} ${formatNumber(t.amount)}${currency}
+                            </div>
+                            <button class="delete-btn" data-id="${t.id}">×</button>
+                        </div>
+                    `);
+                    
+                    $list.append($item);
+                });
+
+                $('.delete-btn').click(function() {
+                    const id = $(this).data('id');
+                    deleteTransaction(id);
+                });
+            }
+
+            function formatDateTime(timestamp) {
+                const date = new Date(timestamp);
+                
+                const daysUz = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
+                const daysRu = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+                const days = currentLang === 'uz' ? daysUz : daysRu;
+                
+                const dayName = days[date.getDay()];
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                
+                return `${dayName}, ${day}.${month}.${year} - ${hours}:${minutes}`;
+            }
+
+            function deleteTransaction(id) {
+                const confirmText = currentLang === 'uz' 
+                    ? 'Rostdan ham o\'chirmoqchimisiz?' 
+                    : 'Вы действительно хотите удалить?';
+                
+                if (confirm(confirmText)) {
+                    transactions = transactions.filter(t => t.id !== id);
+                    calculateBalance();
+                    renderTransactions();
+                }
+            }
+
+            function addTransaction(type) {
+                const description = $('#description').val().trim();
+                const amount = parseFloat($('#amount').val());
+
+                if (!description || !amount || amount <= 0) {
+                    const msg = currentLang === 'uz' 
+                        ? 'Iltimos, barcha maydonlarni to\'ldiring!' 
+                        : 'Пожалуйста, заполните все поля!';
+                    alert(msg);
+                    return;
+                }
+
+                const transaction = {
+                    id: Date.now(),
+                    type: type,
+                    description: description,
+                    amount: amount,
+                    timestamp: Date.now()
+                };
+
+                transactions.push(transaction);
+                
+                $('#description').val('');
+                $('#amount').val('');
+
+                calculateBalance();
+                renderTransactions();
+            }
+
+            $('#btnIncome').click(function() {
+                addTransaction('income');
+            });
+
+            $('#btnExpense').click(function() {
+                addTransaction('expense');
+            });
+
+            $('#lightTheme').click(function() {
+                updateTheme('light');
+            });
+
+            $('#darkTheme').click(function() {
+                updateTheme('dark');
+            });
+
+            $('#languageSelect').change(function() {
+                updateLanguage($(this).val());
+                renderTransactions();
+                calculateBalance();
+            });
+
+            $('#mobileProfileBtn').click(function() {
+                $('#sidebar').addClass('active');
+                $('#sidebarOverlay').addClass('active');
+            });
+
+            $('#sidebarOverlay').click(function() {
+                $('#sidebar').removeClass('active');
+                $('#sidebarOverlay').removeClass('active');
+            });
+
+            $('#closeSidebarBtn').click(function(e) {
+                e.stopPropagation();
+                $('#sidebar').removeClass('active');
+                $('#sidebarOverlay').removeClass('active');
+            });
+
+            $('#closeNotif').click(function() {
+                $('#notificationBanner').removeClass('show');
+            });
+
+            $('#searchBox').on('input', function() {
+                searchQuery = $(this).val();
+                renderTransactions();
+            });
+
+            $('.filter-btn').click(function() {
+                $('.filter-btn').removeClass('active');
+                $(this).addClass('active');
+                currentFilter = $(this).data('filter');
+                renderTransactions();
+            });
+
+            calculateBalance();
+            renderTransactions();
+            checkNotifications();
+            
+            setInterval(checkNotifications, 60000);
+        });
+    </script>
+</body>
+</html>
